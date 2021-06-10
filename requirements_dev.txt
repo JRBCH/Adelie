@@ -1,0 +1,21 @@
+pip>=19.2.3
+
+watchdog>=0.9.0
+Sphinx>=1.8.5
+twine>=1.14.0
+
+# Testing
+pytest>=5.4.3
+coverage>=4.5.4
+pytest-cov>=2.9.0
+
+# Automatic code formatting
+pre-commit>=2.5.1
+black>=20.0
+flake8>=3.7.8
+
+# Versioning
+bump2version>=0.5.11
+
+
+
