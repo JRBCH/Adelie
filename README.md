@@ -3,6 +3,7 @@
 </p>
 
 Adelie is a framework for rate-based models used in computational neuroscience research.
+<<<<<<< HEAD
 It integrates with PyTorch and allows for GPU support.
 
 
@@ -36,3 +37,6 @@ try and implement the following features:
 
 
 
+=======
+It integrates with PyTorch and allows for GPU support.
+>>>>>>> master
