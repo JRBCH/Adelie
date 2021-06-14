@@ -99,7 +99,7 @@ class AdelieConnection(AdelieModule):
         # # # # # # # # # # # # # #
 
         self.register_parameter(
-            "w", torch.nn.Parameter(w.to(self.device), requires_grad=False)
+            "w", torch.nn.Parameter(w.clone().to(self.device), requires_grad=False)
         )
 
         self.register_buffer(
