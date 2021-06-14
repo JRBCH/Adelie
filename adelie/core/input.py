@@ -18,7 +18,7 @@ class Input(AdelieModule):
         super(Input, self).__init__(**kwargs)
 
         self.n = n
-        self.y = torch.zeros(n)
+        self.y = torch.zeros(n, device=self.device)
 
     def forward(self, x, *args) -> torch.Tensor:
         self.y = x
@@ -27,6 +27,6 @@ class Input(AdelieModule):
     def reset_state(self, batchsize=None) -> None:
 
         if batchsize is not None:
-            self.y = torch.zeros(batchsize, self.n)
+            self.y = torch.zeros(batchsize, self.n, device=self.device)
         else:
-            self.y = torch.zeros(self.n)
+            self.y = torch.zeros(self.n, device=self.device)

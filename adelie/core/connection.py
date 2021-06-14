@@ -128,7 +128,9 @@ class AdelieConnection(AdelieModule):
 
     def update(self) -> None:
         """ Update weights """
-        torch.clamp(self.w, self.wmin, self.wmax, out=self.w)
+
+        if self._clamp_weights:
+            torch.clamp(self.w, self.wmin, self.wmax, out=self.w)
 
         if self.zero_diag:
             self.w.fill_diagonal_(0)

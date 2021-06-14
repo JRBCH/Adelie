@@ -1,7 +1,7 @@
 import torch
 import math
 
-from torch.utils.data import Dataset
+from torch.utils.data import IterableDataset
 from typing import Union, Optional, Iterable, Dict, Tuple
 
 # Local
@@ -61,7 +61,7 @@ class OUprocess:
         self.state = torch.ones(self.n) * self.mu
 
 
-class MixedChannelInputs(Dataset):
+class MixedChannelInputs(IterableDataset):
 
     def __init__(self,
                  n_signals,
@@ -82,6 +82,7 @@ class MixedChannelInputs(Dataset):
         :param n_signals:       number of independent signals
         :param n_inputs:        number of input neurons
         :param c:               constant c to subtract from OU process (controls sparseness)
+        :param amp:             amplitude of OU processes
         :param dt:              timestep
         :param batchsize:       batchsize
         :param tuning_width:    tuning width of the input neurons.
@@ -90,6 +91,7 @@ class MixedChannelInputs(Dataset):
 
         self.n = n_inputs
         self.dt = dt
+        self.batchsize = batchsize
 
         self.cutoff = cutoff
         self.amp = amp
@@ -100,8 +102,27 @@ class MixedChannelInputs(Dataset):
         # normalize tuning curves
         self.tuning *= 1 / self.tuning.sum(0)
 
+    def __iter__(self):
+        """
+        Returns an iterator over the dataset
+        :return:
+        """
 
-    def simulate(self, T) -> torch.Tensor:
+        worker_info = torch.utils.data.get_worker_info()
+
+        if worker_info is None:  # single-process data loading, return the full iterator
+            iter_start = 0
+            iter_end = self.batchsize
+
+        else:  # in a worker process split workload
+            per_worker = int(math.ceil(self.batchsize / float(worker_info.num_workers)))
+            worker_id = worker_info.id
+            iter_start = worker_id * per_worker
+            iter_end = min(iter_start + per_worker, self.batchsize)
+
+        return iter(self._data[:, iter_start:iter_end, :])
+
+    def simulate(self, T, device='cpu') -> torch.Tensor:
         """
         Generates output for time T
         """
@@ -113,9 +134,9 @@ class MixedChannelInputs(Dataset):
         for ix in range(timesteps):
             out[ix, :] = self.Channels.step()
 
-        out = torch.matmul((out - self.cutoff).clip() * self.amp, self.tuning)
+        self._data = torch.matmul((out - self.cutoff).clip(min=0) * self.amp, self.tuning).to(device)
 
-        return out
+        return self._data
 
 
     def get_output(self, s):
