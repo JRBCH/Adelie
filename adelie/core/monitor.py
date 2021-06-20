@@ -19,7 +19,7 @@ class OnlineTrainingMonitor():
                                 Can also be a tuple consisting of a name and function
                                 Examples:
                                     - ['he', 'hi', 'y']
-                                    - ['he', ('rate', func(y))]
+                                    - ['he', ('rate', func(model))]
         :param rec_stepsize:    Record every _th timestep
         :param rec_dt:          Record with timestep dt
         :param dt:              The timestep of the simulation
@@ -151,3 +151,8 @@ class OnlineTrainingMonitor():
 
             self._rec_array_index += 1
             self._step_count = 0
+
+    def save(self, path) -> None:
+
+        torch.save(self.get(), path)
+

@@ -34,7 +34,6 @@ class AdelieConnection(AdelieModule):
         :param wmax: maximum weight
         :param zero_diag: weather to set the diagonal of the weight matrix to zero
                             (weather to allow for autapses if source==target)
-        :param plastic: weather synapse is plastic
         """
 
         super(AdelieConnection, self).__init__(**kwargs)

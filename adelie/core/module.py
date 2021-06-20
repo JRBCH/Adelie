@@ -8,6 +8,7 @@ Implements the Adelie base module, inherits from torch.nn.Module
 """
 
 import torch
+import numpy as np
 
 
 class AdelieModule(torch.nn.Module):
@@ -25,6 +26,40 @@ class AdelieModule(torch.nn.Module):
     def forward(self, x, *args) -> torch.Tensor:
         """ forward pass """
         pass
+
+    def converge(self,
+                 x,
+                 target_delta: float = 1e-2,
+                 stability_iterations: int = None,
+                 *args) -> torch.Tensor:
+        """
+        Calculates the converged state of the network given an input.
+
+        If target_delta is supplied, converges the network until the
+            total change in output is less than target_delta
+
+        Alternatively, if stability_iterations is supplied, iterates
+            for that many iterations and returns the output
+        """
+
+        # if number of iterations is supplied, iterate
+        if stability_iterations is not None:
+            for i in range(stability_iterations):
+                out = self.forward(x)
+
+        # else if target stability criterion is supplied, iterate until convergence
+        elif isinstance(target_delta, float):
+            iteration_count = 1
+            delta = np.inf
+            out = self.forward(x)
+
+            while delta > target_delta:
+                out_new = self.forward(x)
+                delta = (out - out_new).abs().sum()
+                out = out_new
+                iteration_count += 1
+
+            return out
 
     def reset_state(self, batchsize: int = 1) -> None:
         """ Resets state variables in all Sub-modules """
@@ -78,4 +113,5 @@ class AdelieModule(torch.nn.Module):
 
         for module in self.children():
             module.precompute_decays(dt)
+
 

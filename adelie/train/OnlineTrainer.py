@@ -113,10 +113,14 @@ class OnlineTrainer:
 
         bar = Bar(
             "Training network...",
-            max=timesteps,
+            max=100,
             suffix="%(percent)d%% simulated."
                    " Estimated time until completion: %(eta_td)s",
         )
+        # Tile timesteps in 100 steps for progress bar
+        bar_update_step = int(timesteps/100)
+        next_bar_update = bar_update_step - 1  # minus 1 because of zero-indexing
+
 
         for step in range(timesteps):
             try:
@@ -153,19 +157,22 @@ class OnlineTrainer:
                 self.model.update()
                 update_counter = 0
 
+            update_counter += 1
+
             # recording
             for m in self.monitors:
                 m.record()
 
-            bar.next()
-            update_counter += 1
+            if step >= next_bar_update:
+                bar.next()
+                next_bar_update += bar_update_step
 
         # FINISH TRAINING
         # # # # # # # # #
 
         bar.finish()
         print("Total runtime: {}".format(bar.elapsed_td))
-        print("Average runtime per timestep: {} ms".format(np.round(bar.avg * 1000, 3)))
+        print("Average runtime per timestep: {} ms".format(np.round((bar.avg * 1000) / bar_update_step, 3)))
 
 
 
