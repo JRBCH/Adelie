@@ -134,7 +134,17 @@ class MixedChannelInputs(IterableDataset):
         for ix in range(timesteps):
             out[ix, :] = self.Channels.step()
 
-        self._data = torch.matmul((out - self.cutoff).clip(min=0) * self.amp, self.tuning).to(device)
+        # cut off OU process
+        cutoff_signal = (out - self.cutoff).clip(min=0)
+
+        # calculate lifetime sparseness
+        self._lifetime_sparseness = (cutoff_signal.mean(0)**2 / (cutoff_signal**2).mean(0)).mean()
+
+        # normalize each channel to a mean output of amp
+        cutoff_signal *= self.amp / cutoff_signal.mean(0)
+
+        # compute data
+        self._data = torch.matmul(cutoff_signal, self.tuning).to(device)
 
         return self._data
 
@@ -150,3 +160,11 @@ class MixedChannelInputs(IterableDataset):
         reset state
         """
         self.Channels.reset_state()
+
+    @property
+    def lifetime_sparseness(self):
+        """
+        returns Lifetime sparseness of each independent signal
+        :return: E[s]**2 / E[s**2]
+        """
+        return self._lifetime_sparseness
