@@ -25,3 +25,18 @@ def generate_gaussian_tuning_curves(n_inputs, n_outputs, sigma):
 
     return w
 
+def generate_stacked_identity(Npre, Npost):
+
+    if Npre < Npost:
+        # if pre < post, concatenate matrices and form [Npre x Nost] tensor
+        return torch.cat([torch.eye(Npre)] * int(np.ceil(Npost / Npre))).T[
+            :Npre, :Npost
+        ]
+
+    elif Npost < Npre:
+        # if post < pre, concatenate matrices and form [Npre x Nost] tensor
+        return torch.cat([torch.eye(Npost)] * int(np.ceil(Npre / Npost)))[:Npre, :Npost]
+
+    else:
+        # else the two are the same. return identity
+        return torch.eye(Npre)

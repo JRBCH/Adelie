@@ -73,7 +73,7 @@ class OnlineTrainingMonitor():
 
         # update time to after simulation
         # (ensures that future training is properly appended)
-        self.t = T
+        self.t += T
 
         # Make recording tensors
         for v in self.variables:
@@ -155,4 +155,3 @@ class OnlineTrainingMonitor():
     def save(self, path) -> None:
 
         torch.save(self.get(), path)
-

@@ -17,11 +17,13 @@ class AdelieModule(torch.nn.Module):
     Inherits from torch.nn.Module
     """
 
-    def __init__(self, device: str = "cpu", batchsize: int = 1, **kwargs):
+    def __init__(self, device: str = "cpu", batchsize: int = 1, mode: str = 'online', **kwargs):
         super(AdelieModule, self).__init__()
 
         self.device = device
         self.batchsize = batchsize
+
+        self.mode = mode
 
     def forward(self, x, *args) -> torch.Tensor:
         """ forward pass """
@@ -43,7 +45,7 @@ class AdelieModule(torch.nn.Module):
         """
 
         # if number of iterations is supplied, iterate
-        if stability_iterations is not None:
+        if isinstance(stability_iterations, int):
             for i in range(stability_iterations):
                 out = self.forward(x)
 
@@ -51,15 +53,29 @@ class AdelieModule(torch.nn.Module):
         elif isinstance(target_delta, float):
             iteration_count = 1
             delta = np.inf
-            out = self.forward(x)
+            out = self.forward(x).clone()
 
             while delta > target_delta:
-                out_new = self.forward(x)
-                delta = (out - out_new).abs().sum()
+                out_new = self.forward(x).clone()
+                delta = (out - out_new).abs().max()
                 out = out_new
                 iteration_count += 1
 
-            return out
+        else:
+            raise ValueError('Either stability_iterations (int) or target_delta (float) must be supplied')
+
+        return out
+
+    def _test_convergence(self,
+                         x,
+                         stability_iterations: int = 10):
+
+        state = list()
+
+        for i in range(stability_iterations):
+            state.append(self.forward(x).clone())
+
+        return state
 
     def reset_state(self, batchsize: int = 1) -> None:
         """ Resets state variables in all Sub-modules """
@@ -114,4 +130,18 @@ class AdelieModule(torch.nn.Module):
         for module in self.children():
             module.precompute_decays(dt)
 
+    def set_mode(self, new_mode):
+        """
+        Sets mode to either ONLINE or CONVERGED
+        :param mode: 'online' or 'converged'
+        """
+
+        if new_mode in ('online', 'converged', 'o', 'c'):
+            self.mode = new_mode
+
+            for module in self.children():
+                module.set_mode(new_mode)
+
+        else:
+            raise ValueError('Invalid mode. must be "online" or "converged"')
 

@@ -3,11 +3,12 @@ from .module import AdelieModule
 from typing import Union, Callable
 
 
-# List of activation functions
+# Custom Activation functions
 
-# ReLu: torch.relu()
-# Tanh:
-# Custom:
+def relu_squared(x):
+    return torch.relu(x)**2
+
+# Neuron Class
 
 class Neurons(AdelieModule):
     """
@@ -27,7 +28,7 @@ class Neurons(AdelieModule):
         :param bias:        Bias for neurons (float or vector of size n)
         :param tau:         Integration time constant
         :param activation:  Activation function. Can be one of:
-                                - string ('relu', 'sigmoid', 'tanh', 'linear')
+                                - string ('relu', 'sigmoid', 'tanh', 'linear', 'relu_squared')
                                 - callable function
         :param kwargs:      Keyword parameters
         """
@@ -54,6 +55,8 @@ class Neurons(AdelieModule):
 
             if activation.lower() == 'relu':
                 self._activation = torch.relu
+            if activation.lower() == 'relu_squared':
+                self._activation = relu_squared
             if activation.lower() == 'sigmoid':
                 self._activation = torch.sigmoid
             if activation.lower() == 'tanh':
@@ -98,4 +101,5 @@ class Neurons(AdelieModule):
             y: The output of the population
         """
         self.y += self._dt_over_tau * (self._activation(x) - self.y)
+
         return self.y
